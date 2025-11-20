@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: khl_stats
+      POSTGRES_USER: khl_user
+      POSTGRES_PASSWORD: khl_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: gunicorn khlsite.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DB_NAME: khl_stats
+      DB_USER: khl_user
+      DB_PASSWORD: khl_password
+      DB_HOST: db
+      DB_PORT: 5432
+      DJANGO_DEBUG: "True"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
