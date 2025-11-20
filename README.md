@@ -1,32 +1,31 @@
 # Ice-Hockey-Leagues-WebScraping
-## ASU Software Engineering Capstone Team 
 
-### Web Scraping
-- WebScraping a new directory is added in the project, which is scraping 3 Ice Hockey Leagues, SHL, LIIGA, KHL leagues
-- Scrapy, a web scraping framework is used and psycopg2 is used to push scraped data into AWS PostgreSQL Database
+## Django dashboard for KHL parsing
+The project now ships with a lightweight Django site to view collected KHL standings and games, plus a dedicated scraper script that can run inside Docker alongside PostgreSQL.
 
-### Project Setup to run Web Scraper
+### Running with Docker Compose
+1. Build and start the stack:
+   ```bash
+   docker-compose up --build
+   ```
+   The web UI will be available on http://localhost:8000 and PostgreSQL on port 5432.
 
-1.	To download Python: [click here](https://www.python.org/downloads/)  
-	Install the software as mentioned in it, and add its path to the system environment variable
+2. The `entrypoint.sh` script runs migrations and collects static assets before starting Gunicorn.
 
-2. 	To download Pip: [click here](https://bootstrap.pypa.io/get-pip.py)  
-	Save the file `ctrl+s` (file should save in .py format)<br>
-	Open command prompt in the download location: `python get-pip.py`
+### Scraper
+- The scraper lives in `scraper/khl_scraper.py` and writes detailed logs to `scraper/logs/scraper.log`.
+- By default it loads fallback standings from `shlscraper/json/khlLeague.json` and attempts to fetch live games from `https://en.khl.ru/calendar/`.
+- Run it inside the web container (after the stack is up) to populate the database:
+  ```bash
+  docker-compose exec web python scraper/khl_scraper.py
+  ```
 
-3.	To install Libraries that used in the project; under this dir: \rosterdata\WebSraping
-    Open command prompt: `pip install -r requirements.txt`
+### Local development without Docker
+Set `USE_SQLITE_FALLBACK=True` to use SQLite locally:
+```bash
+USE_SQLITE_FALLBACK=True python manage.py migrate
+USE_SQLITE_FALLBACK=True python manage.py runserver
+```
 
-4.	To check if everything installed properly
-	In command prompt: `python`<br>
-	In Python console: `import scrapy, psycopg2`<br>
-	**If you get no error, Project Setup is Done**
-
-5.	To run the project:<br>
-    under this dir: \shlscraper <br>
-	Open Command Prompt and type:
-    - scrapy crawl shl       # to scrape data from shl website <br>
-    - scrapy crawl liiga     # to scrape data from liiga website <br>
-    - scrapy crawl khl       # to scrape data from khl website <br>
-    
-    **data will be updated and pushed to database in AWS PostgreSQL** <br>
+### Legacy Scrapy spiders
+The historical Scrapy spiders remain in `shlscraper/shlscraper/spiders/` for reference but are not invoked by the new Django dashboard.
